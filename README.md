@@ -1,2 +1,2 @@
 # README file for NFL searching microservice 
-This is up until Spring 1.
+This is up until Sprint 1.
