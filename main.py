@@ -3,8 +3,11 @@ from fastapi import FastAPI, Response
 from fastapi.responses import HTMLResponse
 import uvicorn
 import mysql.connector
+from resources import player
 
+# instances initialization
 app = FastAPI()
+player_resource = player.PlayerResource()
 
 # https://dev.mysql.com/doc/connector-python/en/connector-python-example-connecting.html
 # define MySQL connection parameters
@@ -28,7 +31,7 @@ show the player game stats information based on the player_id, and other optiona
 as an html table webpage (if the connnection to the database is fine and the data can be found)
 https://fastapi.tiangolo.com/advanced/custom-response/#return-an-htmlresponse-directly
 """
-@app.get("v1/players/{player_id}/stat", response_class = HTMLResponse)
+@app.get("/v1/players/{player_id}/stat", response_class = HTMLResponse)
 async def player_stat_by_id(player_id: str, week: int=None, season: int=None):
 
     print(f"You are looking at player: {player_id}, more info below:")
@@ -92,6 +95,37 @@ async def player_stat_by_id(player_id: str, week: int=None, season: int=None):
 
     # connection error
     except Exception as e:
+        return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
+
+@app.get("/players/{player_id}", response_class = HTMLResponse)
+async def player_by_id(player_id: str):
+    try:
+        player = player_resource.get_player_by_id(player_id)
+
+        if player:
+            player = list(player[0])
+            # print(player) # debugging purpose
+            message = "<html><body>"
+            message += "Here is the player basic information you requested:"
+
+            columns_name = list(player_resource.player_basic.columns.keys())
+            # print(columns_name) # debugging purpose
+
+            player_zip = zip(columns_name, player)
+            for tup in player_zip:
+                message += f"<h3>{tup[0]}:</h3> {tup[1]}"
+
+            message += "</html></body>"
+
+            rsp = Response(content=message)
+            return rsp
+
+        else:
+            rsp = Response(content="Sorry, the player you are looking for is not in the database.", media_type="text/plain")
+            return rsp
+
+    except Exception as e:
+        # other exceptions if encounterd
         return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
 
 """
