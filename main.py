@@ -139,18 +139,17 @@ POST operations here
 """
 add a new player to the player_basic table on database, make use of the player base model in resource
 """
-@app.post("/players", response_model=player.PlayerModel)
+@app.post("/players")
 async def add_player(player: player.PlayerModel):
     try:
         # add player to the database
         result = player_resource.add_player(player)
+        player_id = player.player_id
 
-        # check if the player was successfully added https://docs.sqlalchemy.org/en/20/tutorial/data_update.html
-        if result.rowcount == 1:
-            return player
-        else:
-            return Response(content="Failed to add the player to the database", media_type="text/plain",
-                            status_code=500)
+        # check if the player was successfully added by showing the basic info page
+        # https://fastapi.tiangolo.com/async/
+        GET_response = await player_by_id(player_id)
+        return GET_response
 
     except Exception as e:
         # other exception if encountered
