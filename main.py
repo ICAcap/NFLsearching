@@ -159,6 +159,10 @@ async def add_player(player: player.PlayerModel):
 """
 PUT operations here
 """
+
+"""
+a function to modify a player basic information from the player_basic table by player_id
+"""
 @app.put("/players/modify/{player_id}")
 async def modify_player(player: player.PlayerModel, player_id):
     try:
@@ -177,6 +181,10 @@ async def modify_player(player: player.PlayerModel, player_id):
 
 """
 DELETE operations here
+"""
+
+"""
+a function to delete a player from the player_basic table by player_id
 """
 @app.delete("/players")
 async def delete_player(player_id: str):
