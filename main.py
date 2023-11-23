@@ -97,6 +97,9 @@ async def player_stat_by_id(player_id: str, week: int=None, season: int=None):
     except Exception as e:
         return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
 
+"""
+Show the basic information of a player by the player_id
+"""
 @app.get("/players/{player_id}", response_class = HTMLResponse)
 async def player_by_id(player_id: str):
     try:
@@ -132,6 +135,25 @@ async def player_by_id(player_id: str):
 POST operations here
 """
 
+"""
+add a new player to the player_basic table on database, make use of the player base model in resource
+"""
+@app.post("/players", response_model=player.PlayerModel)
+async def add_player(player_data: player.PlayerModel):
+    try:
+        # add player to the database
+        result = player_resource.add_player(player_data)
+
+        # check if the player was successfully added https://docs.sqlalchemy.org/en/20/tutorial/data_update.html
+        if result.rowcount == 1:
+            return player_data
+        else:
+            return Response(content="Failed to add the player to the database", media_type="text/plain",
+                            status_code=500)
+
+    except Exception as e:
+        # other exception if encountered
+        return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
 
 """
 PUT operations here

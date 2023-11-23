@@ -53,3 +53,32 @@ class PlayerResource:
         exe = self.conn.execute(query)  # executing the query
         result = exe.fetchall()
         return result
+
+    """
+    function to add player using PlayerModel to the player_basic table
+    @param player: the PlayerModel representation of a new player
+    @return result: the Cursor result
+    """
+    def add_player(self, player: PlayerModel):
+        # the insertion query
+        ins_query = self.player_basic.insert().values(
+            player_id=player.player_id,
+            name=player.name,
+            position=player.position,
+            number=player.number,
+            current_Team=player.current_Team,
+            height=player.height,
+            weight=player.weight,
+            age=player.age,
+            college=player.college
+        )
+
+        # execution
+        result = self.conn.execute(ins_query)
+        # print(result)
+        # print(type(result))
+
+        # commit
+        self.conn.commit()
+
+        return result
