@@ -105,6 +105,7 @@ async def player_by_id(player_id: str):
     try:
         player = player_resource.get_player_by_id(player_id)
 
+        # the player is found in the table
         if player:
             player = list(player[0])
             # print(player) # debugging purpose
@@ -139,14 +140,14 @@ POST operations here
 add a new player to the player_basic table on database, make use of the player base model in resource
 """
 @app.post("/players", response_model=player.PlayerModel)
-async def add_player(player_data: player.PlayerModel):
+async def add_player(player: player.PlayerModel):
     try:
         # add player to the database
-        result = player_resource.add_player(player_data)
+        result = player_resource.add_player(player)
 
         # check if the player was successfully added https://docs.sqlalchemy.org/en/20/tutorial/data_update.html
         if result.rowcount == 1:
-            return player_data
+            return player
         else:
             return Response(content="Failed to add the player to the database", media_type="text/plain",
                             status_code=500)
@@ -158,10 +159,39 @@ async def add_player(player_data: player.PlayerModel):
 """
 PUT operations here
 """
+@app.put("/players/modify/{player_id}")
+async def modify_player(player: player.PlayerModel, player_id):
+    try:
+        # modify the data of the player
+        player_resource.modify_player(player, player_id)
+
+        # show the modified infos using the GET operation
+        # https://fastapi.tiangolo.com/async/
+        GET_response = await player_by_id(player_id)
+        return GET_response
+
+    except Exception as e:
+        # other exception if encountered
+        return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
+
 
 """
 DELETE operations here
 """
+@app.delete("/players")
+async def delete_player(player_id: str):
+    try:
+        # delete a player by the id
+        player_resource.delete_player(player_id)
+
+        message = "Done."
+        return Response(content=message, media_type="text/plain", status_code=200)
+
+    except Exception as e:
+        # other exception if encountered
+        return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
+
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000) # local machine
