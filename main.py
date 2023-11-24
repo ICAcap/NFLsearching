@@ -1,9 +1,15 @@
 # import libraries here
 from fastapi import FastAPI, Response
 from fastapi.responses import HTMLResponse
+from fastapi.encoders import jsonable_encoder
 import uvicorn
 import mysql.connector
+import requests
+import os
 from resources import player
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # instances initialization
 app = FastAPI()
@@ -128,6 +134,26 @@ async def player_by_id(player_id: str):
         # other exceptions if encounterd
         return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
 
+#external_api_call
+@app.get("/players/{player_id}/news", response_class=HTMLResponse)
+async def get_news_by_id(player_id: str):
+    api_key = os.getenv("API_KEY")
+    url = f"https://api.sportsdata.io/v3/nfl/scores/json/NewsByPlayerID/{player_id}?key={api_key}"
+
+    try:
+        rsp = requests.get(url)
+        
+        # Check if the request was successful (status code 200)
+        if rsp.status_code == 200:
+            # Return the content of the response
+            return HTMLResponse(content=rsp.text, status_code=200)
+        else:
+            return Response(content="Sorry, the player you are looking for is not in the database.", media_type="text/plain", status_code=rsp.status_code)
+
+    except requests.exceptions.RequestException as e:
+        # Create a FastAPI response object with an error message
+        return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
+
 """
 POST operations here
 """
@@ -142,5 +168,5 @@ DELETE operations here
 """
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000) # local machine
+    uvicorn.run(app, host="127.0.0.1", port=8001) # local machine
     # uvicorn.run(app, host="0.0.0.0", port=8000)
