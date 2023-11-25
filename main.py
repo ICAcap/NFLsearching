@@ -103,11 +103,15 @@ async def player_stat_by_id(player_id: str, week: int=None, season: int=None):
     except Exception as e:
         return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
 
+"""
+Show the basic information of a player by the player_id
+"""
 @app.get("/players/{player_id}", response_class = HTMLResponse)
 async def player_by_id(player_id: str):
     try:
         player = player_resource.get_player_by_id(player_id)
 
+        # the player is found in the table
         if player:
             player = list(player[0])
             # print(player) # debugging purpose
@@ -154,19 +158,66 @@ async def get_news_by_id(player_id: str):
         # Create a FastAPI response object with an error message
         return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
 
-"""
-POST operations here
-"""
 
 
 """
-PUT operations here
+add a new player to the player_basic table on database, make use of the player base model in resource
 """
+@app.post("/players")
+async def add_player(player: player.PlayerModel):
+    try:
+        # add player to the database
+        result = player_resource.add_player(player)
+        player_id = player.player_id
+
+        # check if the player was successfully added by showing the basic info page
+        # https://fastapi.tiangolo.com/async/
+        GET_response = await player_by_id(player_id)
+        return GET_response
+
+    except Exception as e:
+        # other exception if encountered
+        return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
+
+
 
 """
-DELETE operations here
+a function to modify a player basic information from the player_basic table by player_id
 """
+@app.put("/players/modify/{player_id}")
+async def modify_player(player: player.PlayerModel, player_id):
+    try:
+        # modify the data of the player
+        player_resource.modify_player(player, player_id)
+
+        # show the modified infos using the GET operation
+        # https://fastapi.tiangolo.com/async/
+        GET_response = await player_by_id(player_id)
+        return GET_response
+
+    except Exception as e:
+        # other exception if encountered
+        return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
+
+
+"""
+a function to delete a player from the player_basic table by player_id
+"""
+@app.delete("/players")
+async def delete_player(player_id: str):
+    try:
+        # delete a player by the id
+        player_resource.delete_player(player_id)
+
+        message = "Done."
+        return Response(content=message, media_type="text/plain", status_code=200)
+
+    except Exception as e:
+        # other exception if encountered
+        return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
+
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8001) # local machine
-    # uvicorn.run(app, host="0.0.0.0", port=8000)
+

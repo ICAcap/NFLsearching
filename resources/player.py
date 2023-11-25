@@ -56,6 +56,86 @@ class PlayerResource:
         result = exe.fetchall()
         return result
 
-
     
+    """
+    function to add player using PlayerModel to the player_basic table
+    @param player: the PlayerModel representation of a new player
+    @return result: the Cursor result
+    """
+    def add_player(self, player: PlayerModel):
+        # the insertion query
+        ins_query = self.player_basic.insert().values(
+            player_id=player.player_id,
+            name=player.name,
+            position=player.position,
+            number=player.number,
+            current_Team=player.current_Team,
+            height=player.height,
+            weight=player.weight,
+            age=player.age,
+            college=player.college
+        )
+
+        # execution
+        result = self.conn.execute(ins_query)
+        # print(result)
+        # print(type(result))
+
+        # commit
+        self.conn.commit()
+
+        return result
+
+    """
+    function to modify a player, making use of the player model
+    @param player: the PlayerModel representation of a player
+    @param player_id: the player id
+    @return result: the Cursor result 
+    """
+    def modify_player(self, player: PlayerModel, player_id: str):
+
+        # create a dictionary with the updated player information
+        # the player_id is fixed and can't be changed, even if user
+        # can try to do that in the API docs
+
+        # this will be depended by the input on fastAPI doc
+        update_data = {
+            "name": player.name,
+            "position": player.position,
+            "number": player.number,
+            "current_Team": player.current_Team,
+            "height": player.height,
+            "weight": player.weight,
+            "age": player.age,
+            "college": player.college
+        }
+
+        # update query
+        update_query = self.player_basic.update().where(self.player_basic.columns.player_id == player_id).values(update_data)
+
+        # execute
+        result = self.conn.execute(update_query)
+
+        # commit
+        self.conn.commit()
+
+        return result
+
+    """
+    function to delete a player from the player_basic table by id
+    @param id: the player id
+    @return result: the Cursor result 
+    """
+    def delete_player(self, id: str):
+
+        # delete query
+        del_query = self.player_basic.delete().where(self.player_basic.columns.player_id == id)
+
+        # execute
+        result = self.conn.execute(del_query)
+
+        # commit
+        self.conn.commit()
+
+        return result
 
