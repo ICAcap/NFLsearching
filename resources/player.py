@@ -45,6 +45,9 @@ class PlayerResource:
         # table object for player_basic
         self.player_basic = db_al.Table('player_basic', self.metadata, autoload_with=self.engine)
 
+        # table object for player stat table
+        self.player_stat = db_al.Table('player_stat', self.metadata, autoload_with=self.engine)
+
     """
     function to retrieve player information by player ID from the database
     @param player_id: the player id
@@ -56,6 +59,43 @@ class PlayerResource:
         result = exe.fetchall()
         return result
 
+    """
+       function to retrieve player stat information by player ID from the database
+       @param player_id: the player id
+       @param week: the week of the year (season)
+       @param season: the season -- year
+       @param limit: item per page
+       @param offset: offset
+       @return result_dicts: dictionaries in a list that looks like this: [{'event_id': 1, 'player_id': '1', 'name': 'A.J. Brown', 'position': 'WR'...}] 
+       """
+    def get_player_stats(self, player_id, week: int=None, season: int=None,
+                         limit: int=2, offset: int=0):
+        # the initial select query
+        query = self.player_stat.select().where(self.player_stat.columns.player_id == player_id)
+
+        # add optional filters for week and season if provided
+        if week is not None:
+            query = query.where(self.player_stat.columns.week == week)
+
+        if season is not None:
+            query = query.where(self.player_stat.columns.season == season)
+
+        # apply pagination
+        # https://stackoverflow.com/questions/20642497/sqlalchemy-query-to-return-only-n-results
+        query = query.limit(limit).offset(offset)
+
+        # execute
+        exe = self.conn.execute(query)
+        result = exe.fetchall()
+
+        # get column names
+        # https://stackoverflow.com/questions/20743806/sqlalchemy-execute-return-resultproxy-as-tuple-not-dict
+        column_names = exe.keys()
+
+        # convert each row to a dictionary
+        result_dicts = [dict(zip(column_names, row)) for row in result]
+
+        return result_dicts
     
     """
     function to add player using PlayerModel to the player_basic table

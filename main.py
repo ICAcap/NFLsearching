@@ -1,5 +1,5 @@
 # import libraries here
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.encoders import jsonable_encoder
 import uvicorn
@@ -39,8 +39,6 @@ https://fastapi.tiangolo.com/advanced/custom-response/#return-an-htmlresponse-di
 """
 @app.get("/v1/players/{player_id}/stat", response_class = HTMLResponse)
 async def player_stat_by_id(player_id: str, week: int=None, season: int=None):
-
-    print(f"You are looking at player: {player_id}, more info below:")
 
     try:
         # connect to the MySQL server
@@ -101,6 +99,69 @@ async def player_stat_by_id(player_id: str, week: int=None, season: int=None):
 
     # connection error
     except Exception as e:
+        return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
+
+"""
+2nd version of player stat getter, using SQLalchemy
+set limit to be 2 by default, maximum limit 4
+set offset to be 0 by default, has to be at least 0
+https://fastapi.tiangolo.com/tutorial/query-params-str-validations/
+https://stackoverflow.com/questions/72217828/fastapi-how-to-get-raw-url-path-from-request
+"""
+@app.get("/players/{player_id}/stat")
+async def player_stat_by_id2(player_id: str, request: Request, week: int=None, season: int=None,
+                             limit: int = Query(default=2, le=4), offset: int = Query(default=0, ge=0)):
+    try:
+        # retrieve player stats with pagination
+        player_stats_dict = player_resource.get_player_stats(player_id, week, season, limit, offset)
+
+        # check if player stats exist
+        if player_stats_dict:
+
+            curr_url = str(request.url)
+            player_url = curr_url.split("/stat")[0]
+
+            # create a list to store the result
+            result_dict = {}
+            data_list = []
+
+            # loop through the paginated player stats
+            for stats in player_stats_dict:
+                # construct the "links" part of the response that is to be added to the data_list
+                # ask prof
+                # https://stackoverflow.com/questions/70477787/how-to-get-current-path-in-fastapi-with-domain
+                links = [
+                    {"rel": "self", "href": curr_url},
+                    {"rel": "player basics", "href": f"{player_url}"}
+                ]
+                stat_dict = stats.copy()
+                stat_dict["links"] = links
+                data_list.append(stat_dict)
+
+            # construct the "links" part for pagination
+            prev = curr_url.split("offset=")[0] + "offset=" + str(max(offset - limit, 0))
+            next = curr_url.split("offset=")[0] + "offset=" + str(offset+limit)
+
+            pagi_links = [
+                {"rel": "current", "href": curr_url},
+                {"rel": "prev", "href": prev},
+                {"rel": "next", "href": next}
+            ]
+
+            result_dict["data"] = data_list
+            result_dict["links"] = pagi_links
+
+            return [result_dict]
+
+        else:
+            rsp = Response(
+                content=f"Sorry, the player stats under player ID: {player_id} , week: {week} , season: {season}, limit: {limit}, offset: {offset} aren't in the database.",
+                media_type="text/plain"
+            )
+            return rsp
+
+    except Exception as e:
+        # handle other exceptions if encountered
         return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
 
 """
@@ -220,5 +281,6 @@ async def delete_player(player_id: str):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8001) # local machine
-    #
+    # uvicorn.run(app, host="0.0.0.0", port=8001) # cloud machine
+
 
