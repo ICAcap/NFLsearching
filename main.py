@@ -6,6 +6,8 @@ import uvicorn
 import mysql.connector
 import requests
 import os
+#new
+import boto3
 from resources import player
 from dotenv import load_dotenv
 
@@ -230,10 +232,22 @@ async def add_player(player: player.PlayerModel):
         # add player to the database
         result = player_resource.add_player(player)
         player_id = player.player_id
+        
+        #new
+        player_name=player.name
 
+        sns_topic_arn = os.getenv("ARN")
+        message_content = f'New Player {player_name} Added to the database!'
+        subject= 'Player Added!'
+        
+        publish_to_sns_topic(sns_topic_arn, message_content, subject)
+        #new end
+        
         # check if the player was successfully added by showing the basic info page
         # https://fastapi.tiangolo.com/async/
         GET_response = await player_by_id(player_id)
+        
+        
         return GET_response
 
     except Exception as e:
@@ -253,6 +267,8 @@ async def modify_player(player: player.PlayerModel, player_id):
 
         # show the modified infos using the GET operation
         # https://fastapi.tiangolo.com/async/
+
+        
         GET_response = await player_by_id(player_id)
         return GET_response
 
@@ -277,7 +293,41 @@ async def delete_player(player_id: str):
         # other exception if encountered
         return Response(content=f"Error: {str(e)}", media_type="text/plain", status_code=500)
 
+#new
+def publish_to_sns_topic(topic_arn, message, subject=None):
+    """
+    Publish a message to an AWS SNS topic.
 
+    Parameters:
+    - topic_arn (str): The Amazon Resource Name (ARN) of the SNS topic.
+    - message (str): The message you want to publish to the topic.
+    - subject (str): (Optional) The subject of the message.
+
+    Returns:
+    - dict: The response from the SNS service.
+    """
+    # Create an SNS client
+    region= os.getenv("REGION")
+    access_key= os.getenv("AWS_ACCCESS_KEY_ID")
+    secret_key= os.getenv("AWS_SECRET_ACCESS_KEY")
+    
+    sns_client = boto3.client('sns', region_name=region, 
+                              aws_access_key_id=access_key, 
+                              aws_secret_access_key=secret_key)
+
+    try:
+        # Publish the message to the specified topic
+        response = sns_client.publish(
+            TopicArn=topic_arn,
+            Message=message,
+            Subject=subject
+        )
+        return response
+    except Exception as e:
+        # Handle the exception (e.g., log the error or raise a custom exception)
+        print(f"Error publishing message to SNS topic: {e}")
+        raise
+#new end
 
 if __name__ == "__main__":
     # uvicorn.run(app, host="127.0.0.1", port=8000) # local machine
