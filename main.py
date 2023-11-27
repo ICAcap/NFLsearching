@@ -240,7 +240,9 @@ async def add_player(player: player.PlayerModel):
         message_content = f'New Player {player_name} Added to the database!'
         subject= 'Player Added!'
         
-        publish_to_sns_topic(sns_topic_arn, message_content, subject)
+        response= publish_to_sns_topic(sns_topic_arn, message_content, subject)
+        print("Message published. Response:", response)
+        
         #new end
         
         # check if the player was successfully added by showing the basic info page
