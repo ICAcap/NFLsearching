@@ -11,8 +11,9 @@ import boto3
 from resources import player
 from dotenv import load_dotenv
 
+import graphene
 from starlette.graphql import GraphQLApp
-from schema import Query
+from schema import PlayerQuery
 
 
 load_dotenv()
@@ -32,7 +33,7 @@ db_config = {
 
 
 # graphQL related
-app.add_route("/graphql", GraphQLApp(schema=graphone.Schema(query=Query)))
+app.add_route("/graphql", GraphQLApp(schema=graphene.Schema(query=PlayerQuery)))
 
 """
 GET operations here
