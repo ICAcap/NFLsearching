@@ -35,6 +35,39 @@ db_config = {
 # graphQL related
 app.add_route("/graphql", GraphQLApp(schema=graphene.Schema(query=PlayerQuery)))
 
+# Middleware: Logging incoming requests and outgoing response (use middleware of )
+@app.middleware("http")
+async def log_request_and_response_details(request: Request, call_next):
+    method_name = request.method
+    path = request.url.path
+    
+    # Log incoming request details
+    with open("log.txt", mode="a") as log:
+        content = f"Incoming Request - Method: {method_name}, Path: {path}, Received at: {datetime.now()}\n"
+        log.write(content)
+
+    # Process the request
+    response = await call_next(request)
+
+    # Log outgoing response details
+    with open("log.txt", mode="a") as log:
+        content = f"Outgoing Response - Method: {method_name}, Path: {path}, Status Code: {response.status_code}, Sent at: {datetime.now()}\n"
+        log.write(content)
+
+    return response
+
+API_KEY = "my_secret_api_key"
+
+# Second Middleware: API key authentication; adds a new persona
+@app.middleware("http")
+async def api_key_authentication(request: Request, call_next):
+    api_key = request.headers.get("X-Api-Key")
+    if api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid API Key")
+    
+    response = await call_next(request)
+    return response
+
 """
 GET operations here
 """
