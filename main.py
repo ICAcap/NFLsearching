@@ -1,3 +1,6 @@
+from fastapi import HTTPException
+from datetime import datetime
+
 # import libraries here
 from fastapi import FastAPI, Response, Query, Request
 from fastapi.responses import HTMLResponse
@@ -156,9 +159,6 @@ https://stackoverflow.com/questions/72217828/fastapi-how-to-get-raw-url-path-fro
 async def player_stat_by_id2(player_id: str, request: Request, week: int=None, season: int=None,
                              limit: int = Query(default=2, le=4), offset: int = Query(default=0, ge=0)):
     try:
-        
-        log_request_and_response_details(request)
-        api_key_authentication(request)
         
         # retrieve player stats with pagination
         player_stats_dict = player_resource.get_player_stats(player_id, week, season, limit, offset)
@@ -380,5 +380,3 @@ def publish_to_sns_topic(topic_arn, message, subject=None):
 if __name__ == "__main__":
     # uvicorn.run(app, host="127.0.0.1", port=8000) # local machine
     uvicorn.run(app, host="0.0.0.0", port=8000) # cloud machine
-
-
