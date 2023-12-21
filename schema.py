@@ -1,7 +1,7 @@
 import graphene
 from graphene import ObjectType, ID, String, List
-from .serializer import PlayerGrapheneModel
-from .model.model_player import Player
+from serializer import PlayerGrapheneModel
+from model.model_player import Player
 
 # import from serializers
 from serializer import PlayerGrapheneModel
@@ -16,11 +16,11 @@ class PlayerQuery(graphene.ObjectType):
                                  player_id=ID(),
                                  name=String(),
                                  position=String(),
-                                 number=int,
+                                 number=String(),
                                  current_team=String(),
                                  height=String(),
                                  weight=String(),
-                                 age=int,
+                                 age=String(),
                                  college=String())
 
     @staticmethod
