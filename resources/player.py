@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 import sqlalchemy as db_al
 import os
-import requests
 from dotenv import load_dotenv
 
 
