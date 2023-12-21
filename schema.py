@@ -4,7 +4,7 @@ import graphene
 from serializer import PlayerGrapheneModel
 
 # import from models
-from .player import Player
+from model.model_player import Player
 
 class Query(graphene.ObjectType):
     say_hello = graphene.String(name=graphene.String(default_value="hello"))
