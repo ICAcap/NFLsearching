@@ -1,10 +1,6 @@
-from fastapi import HTTPException
-from datetime import datetime
-
 # import libraries here
 from fastapi import FastAPI, Response, Query, Request
 from fastapi.responses import HTMLResponse
-from fastapi.encoders import jsonable_encoder
 import uvicorn
 import mysql.connector
 import requests
@@ -16,7 +12,7 @@ from dotenv import load_dotenv
 
 import graphene
 from starlette.graphql import GraphQLApp
-from schema import PlayerQuery
+from resources.query import TeamQuery
 
 
 load_dotenv()
@@ -36,14 +32,15 @@ db_config = {
 
 
 # graphQL related
-app.add_route("/graphql", GraphQLApp(schema=graphene.Schema(query=PlayerQuery)))
+# https://www.tutorialspoint.com/fastapi/fastapi_using_graphql.html
+app.add_route("/team/graphql", GraphQLApp(schema=graphene.Schema(query=TeamQuery)))
 
 # Middleware: Logging incoming requests and outgoing response (use middleware of )
 @app.middleware("http")
 async def log_request_and_response_details(request: Request, call_next):
     method_name = request.method
     path = request.url.path
-    
+
     # Log incoming request details
     with open("log.txt", mode="a") as log:
         content = f"Incoming Request - Method: {method_name}, Path: {path}, Received at: {datetime.now()}\n"
@@ -67,7 +64,7 @@ async def api_key_authentication(request: Request, call_next):
     api_key = request.headers.get("X-Api-Key")
     if api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid API Key")
-    
+
     response = await call_next(request)
     return response
 
